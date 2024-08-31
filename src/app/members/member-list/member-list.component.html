@@ -1,1 +1,7 @@
-<p>member-list works!</p>
+<div class="row" style="margin-top: 150px;">
+    @for(member of members; track member){
+        <div class="col-2">
+            <member-card [member]="member"></member-card>
+        </div>
+    }
+</div>

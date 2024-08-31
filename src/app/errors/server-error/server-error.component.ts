@@ -14,7 +14,9 @@ export class ServerErrorComponent {
   error: any;
 
   constructor(){
+    // Get the current navigation object from the router
     const navigation = this.router.getCurrentNavigation();
+    // Access the 'error' property from the navigation extras state, if it exists
     this.error = navigation?.extras?.state?.['error'];
   }
 }

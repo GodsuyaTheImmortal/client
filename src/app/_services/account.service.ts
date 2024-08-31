@@ -3,18 +3,19 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { User } from '../_models/user';
 import { BehaviorSubject, map } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
-  baseUrl = "https://localhost:5000/api/";
+  baseUrl = environment.apiUrl;
 
   private http: HttpClient = inject(HttpClient);
   private platformId: Object = inject(PLATFORM_ID);
 
   private currentUserSource = new BehaviorSubject<User | null>(null);
-  currenUser$ = this.currentUserSource.asObservable();
+  currentUser$ = this.currentUserSource.asObservable();
   
   constructor() {}
 
