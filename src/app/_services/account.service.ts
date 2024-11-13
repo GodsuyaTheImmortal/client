@@ -23,10 +23,7 @@ export class AccountService {
     return this.http.post<User>(this.baseUrl + "account/login", model).pipe(
       map(user => {
           if(user){
-            if (isPlatformBrowser(this.platformId)){
-              localStorage.setItem("user", JSON.stringify(user));
-            }
-            this.currentUserSource.next(user);
+            this.setCurrentUser(user);
           }
         }
       )
@@ -37,10 +34,7 @@ export class AccountService {
     return this.http.post<User>(this.baseUrl + "account/register", model).pipe(
       map(user => {
           if(user){
-            if (isPlatformBrowser(this.platformId)){
-              localStorage.setItem("user", JSON.stringify(user));
-            }
-            this.currentUserSource.next(user);
+            this.setCurrentUser(user);
           }
         }
       )
@@ -55,6 +49,9 @@ export class AccountService {
   }
 
   setCurrentUser(user: User){
+    if (isPlatformBrowser(this.platformId)){
+      localStorage.setItem("user", JSON.stringify(user));
+    }
     this.currentUserSource.next(user);
   }
 }
