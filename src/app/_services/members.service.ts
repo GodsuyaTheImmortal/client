@@ -2,8 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { environment } from '../../environments/environment.development';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Member } from '../_models/member';
-import { map, of } from 'rxjs';
+import { map, of, take } from 'rxjs';
 import { PaginatedResult } from '../_models/pagination';
+import { UserParams } from '../_models/userParams';
+import { AccountService } from './account.service';
+import { User } from '../_models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -13,41 +16,97 @@ export class MembersService {
   baseUrl = environment.apiUrl;
 
   private http: HttpClient = inject(HttpClient);
+  private accountService: AccountService = inject(AccountService);
 
   members: Member[] = [];
-
-  paginatedResult: PaginatedResult<Member[]> = new PaginatedResult<Member[]>
+  memberCache = new Map();
+  userParams: UserParams | undefined;
+  user: User | undefined;
   
-  constructor() { }
+  constructor() { 
+    this.accountService.currentUser$.pipe(take(1)).subscribe({
+      next: user => {
+        if(user){
+          this.userParams = new UserParams(user);
+          this.user = user;
+        }
+      }
+    })
+  }
 
-  getMembers(page?: number, itemsPerPage?: number){
+  getUserParams(){
+    return this.userParams;
+  }
 
-    let params = new HttpParams();
+  setUserParams(params: UserParams){
+    this.userParams = params;
+  }
 
-    if(page && itemsPerPage){
-      params = params.append('pageNumber', page);
-      params = params.append('pageSize', itemsPerPage);
+  resetUserParams(){
+    if(this.user){
+      this.userParams = new UserParams(this.user);
+      return this.userParams;
     }
 
-    return this.http.get<Member[]>(this.baseUrl + 'users', {observe: 'response', params}).pipe(
+    return;
+  }
+
+  getMembers(userParams: UserParams){
+    const response = this.memberCache.get(Object.values(userParams).join('-'));
+
+    if(response) return of (response);
+
+    let params = this.getPaginationHeaders(userParams.pageNumber, userParams.pageSize);
+
+    params = params.append('minAge', userParams.minAge);
+    params = params.append('maxAge', userParams.maxAge);
+    params = params.append('gender', userParams.gender);
+    params = params.append('orderBy', userParams.orderBy);
+    
+
+    return this.getPaginatedResult<Member[]>(this.baseUrl + 'users', params).pipe(
       map(response => {
-        if (response.body){
-          this.paginatedResult.result = response.body;
-        }
-
-        const pagination = response.headers.get('Pagination');
-        
-        if(pagination){
-          this.paginatedResult.pagination = JSON.parse(pagination);
-        }
-
-        return this.paginatedResult;
+        this.memberCache.set(Object.values(userParams).join('-'), response);
+        return response;
       })
     );
   }
 
+  private getPaginatedResult<T>(url: string, params: HttpParams) {
+
+    const  paginatedResult: PaginatedResult<T> = new PaginatedResult<T>();
+
+    return this.http.get<T>(url, { observe: 'response', params }).pipe(
+      map(response => {
+        if (response.body) {
+          paginatedResult.result = response.body;
+        }
+
+        const pagination = response.headers.get('Pagination');
+
+        if (pagination) {
+          paginatedResult.pagination = JSON.parse(pagination);
+        }
+
+        return paginatedResult;
+      })
+    );
+  }
+
+  private getPaginationHeaders(pageNumber: number, pageSize: number){
+    let params = new HttpParams();
+
+    params = params.append('pageNumber', pageNumber);
+    params = params.append('pageSize', pageSize);
+
+    return params;
+  }
+
   getMember(username: string){
-    const member = this.members.find(x => x.userName === username);
+    const member = [...this.memberCache.values()]
+      .reduce((arr, elem) => arr.concat(elem.result), [])
+      .find((member: Member) => member.userName === username);
+    
     if(member) return of(member);
 
     return this.http.get<Member>(this.baseUrl + 'users/' + username);

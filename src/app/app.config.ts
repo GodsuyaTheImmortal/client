@@ -26,14 +26,14 @@ export const appConfig: ApplicationConfig = {
       HttpClientModule,
       BrowserAnimationsModule,
       NgxSpinnerModule.forRoot({ type: 'line-scale-party' }),
-      TabsModule.forRoot(), 
+      TabsModule.forRoot(),
       ToastrModule.forRoot({
         timeOut: 5000, 
         positionClass: 'toast-bottom-right', 
         closeButton: true, 
         progressBar: true, 
       }),
-      FileUploadModule
+      FileUploadModule,
     )
   ]
 };
