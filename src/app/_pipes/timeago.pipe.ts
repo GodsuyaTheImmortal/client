@@ -11,5 +11,4 @@ export class TimeagoPipe implements PipeTransform {
     if (!value) return '';
     return formatDistanceToNow(new Date(value), { addSuffix: true });
   }
-
 }

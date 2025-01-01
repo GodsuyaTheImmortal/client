@@ -1,5 +1,5 @@
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, RouteReuseStrategy } from '@angular/router';
 
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
@@ -13,6 +13,7 @@ import { NgxSpinnerModule } from 'ngx-spinner';
 import { loadingInterceptor } from './_interceptors/loading.interceptor';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ModalModule } from 'ngx-bootstrap/modal';
+import { CustomRouteReuseStrategy } from './_services/customRouteReuseStrategy';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,6 +24,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([jwtInterceptor]),
       withInterceptors([loadingInterceptor])
     ),
+    { provide: RouteReuseStrategy, useClass: CustomRouteReuseStrategy },
     importProvidersFrom(
       HttpClientModule,
       BrowserAnimationsModule,
